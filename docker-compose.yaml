@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 services:
   catalog:
@@ -15,13 +15,15 @@ services:
     networks:
       iceberg-nessie-net:
     ports:
-      - 8080:8080
+      - 8081:8081
     volumes:
-      - "./example.properties:/etc/trino/catalog/example.properties"
-      - "./post-init.sh:/tmp/post-init.sh"
-      - "./post-init.sql:/tmp/post-init.sql"
+      - './example.properties:/etc/trino/catalog/example.properties'
+      - './post-init.sh:/tmp/post-init.sh'
+      - './post-init.sql:/tmp/post-init.sql'
     command:
-      - "/tmp/post-init.sh"
+      - '/tmp/post-init.sh'
+    depends_on:
+      - mc
 
   storage:
     image: minio/minio
@@ -37,7 +39,7 @@ services:
     ports:
       - 9001:9001
       - 9000:9000
-    command: ["server", "/data", "--console-address", ":9001"]
+    command: ['server', '/data', '--console-address', ':9001']
   # Minio Client Container
   mc:
     depends_on:
@@ -55,14 +57,14 @@ services:
       - AWS_DEFAULT_REGION=us-east-1
     entrypoint: >
       /bin/sh -c "
-      until (/usr/bin/mc config host add minio http://storage:9000 admin password) do echo '...waiting...' && sleep 1; done;
-      /usr/bin/mc rm -r --force minio/warehouse;
-      /usr/bin/mc mb minio/warehouse;
-      /usr/bin/mc mb minio/iceberg;
-      /usr/bin/mc policy set public minio/warehouse;
-      /usr/bin/mc policy set public minio/iceberg;
+      until (mc alias set minio http://storage:9000 admin password) do echo '...waiting...' && sleep 1; done;
+      mc rm -r --force minio/warehouse;
+      mc mb minio/warehouse;
+      mc mb minio/iceberg;
+      mc anonymous set public minio/warehouse;
+      mc anonymous set public minio/iceberg;
       tail -f /dev/null
-      " 
+      "
 
 networks:
-  iceberg-nessie-net: 
+  iceberg-nessie-net:
